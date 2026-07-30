@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro Comercial - Isopan Ibérica</title>
+    
+    <!-- Librería para exportar a Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --isopan-blue: #0056b3; 
+            --isopan-blue-hover: #004494;
+            --input-bg: rgba(255, 255, 255, 0.85);
+            --input-border: #cbd5e1;
+            --input-focus-ring: rgba(0, 86, 179, 0.15);
+            --error-color: #ef4444;
+            --error-bg: #fef2f2;
+            --transition-speed: 0.3s;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 10% 10%, #ffffff 0px, transparent 50%),
+                radial-gradient(at 90% 90%, #e2e8f0 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(0, 86, 179, 0.08) 0px, transparent 70%),
+                radial-gradient(at 80% 20%, rgba(100, 116, 139, 0.1) 0px, transparent 50%),
+                radial-gradient(at 20% 80%, rgba(0, 86, 179, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+            color: var(--text-main);
+        }
+
+        /* BLOQUEO DEL SCROLL DEL FONDO AL ABRIR MODALES EN MÓVIL */
+        body.modal-open { overflow: hidden !important; }
+
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .glass-container {
+            width: 100%; max-width: 520px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px; padding: 40px 32px;
+            box-shadow: 0 16px 40px -10px rgba(0, 40, 85, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+        .logo-img { max-width: 170px; height: auto; margin-bottom: 16px; transition: transform 0.3s ease; }
+        .logo-img:hover { transform: scale(1.02); }
+        .header p { font-size: 15px; font-weight: 500; color: var(--text-secondary); letter-spacing: -0.3px; }
+
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-row { display: flex; gap: 16px; margin-bottom: 20px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #334155; padding-left: 4px; }
+        .form-control {
+            width: 100%; padding: 14px 16px; font-size: 15px; font-family: inherit;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 12px; color: var(--text-main); transition: all var(--transition-speed) ease; outline: none;
+        }
+        .form-control:focus {
+            background: #ffffff; border-color: var(--isopan-blue);
+            box-shadow: 0 0 0 4px var(--input-focus-ring); transform: translateY(-1px);
+        }
+
+        .input-error {
+            border-color: var(--error-color) !important; background-color: var(--error-bg) !important;
+            animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+            40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+
+        .inline-error {
+            color: var(--error-color); background: var(--error-bg); border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 500; margin-top: -5px; margin-bottom: 15px;
+            display: none; text-align: center; animation: slideUpFade 0.3s ease forwards;
+        }
+
+        .radio-group {
+            display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 14px;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 12px; min-height: 50px; align-items: center; transition: all var(--transition-speed) ease;
+        }
+        
+        /* DISEÑO DE PAÍS EN BLOQUES SIN CÍRCULOS */
+        .radio-group-blocks {
+            background: transparent !important; border: none !important; padding: 0 !important; display: flex; gap: 12px;
+        }
+        .radio-group-blocks .radio-label {
+            flex: 1; justify-content: center; text-align: center; background: var(--input-bg); border: 2px solid var(--input-border);
+            border-radius: 12px; padding: 13px 10px !important; transition: all var(--transition-speed) ease;
+        }
+        .radio-group-blocks .radio-label input[type="radio"] { display: none; }
+        .radio-group-blocks .radio-label:has(input[type="radio"]:checked) {
+            border-color: var(--isopan-blue); background: #ffffff; color: var(--isopan-blue);
+            box-shadow: 0 4px 16px var(--input-focus-ring); transform: translateY(-2px);
+        }
+        .radio-group-blocks.input-error .radio-label { border-color: var(--error-color) !important; background-color: var(--error-bg) !important; }
+
+        .radio-label { display: flex !important; align-items: center; font-size: 14px !important; font-weight: 600 !important; cursor: pointer; color: var(--text-main); }
+        .radio-group .radio-label input[type="radio"] {
+            appearance: none; -webkit-appearance: none; width: 18px; height: 18px;
+            border: 2px solid #cbd5e1; border-radius: 50%; margin-right: 8px; outline: none; cursor: pointer; position: relative; background: white;
+        }
+        .radio-group .radio-label input[type="radio"]:checked { border-color: var(--isopan-blue); }
+        .radio-group .radio-label input[type="radio"]:checked::after {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 8px; height: 8px; background: var(--isopan-blue); border-radius: 50%;
+        }
+
+        /* DISEÑO DEL SLIDER DE ÉXITO */
+        .slider-wrapper { 
+            background: var(--input-bg); border: 1px solid var(--input-border); 
+            border-radius: 12px; padding: 14px 20px; display: flex; flex-direction: column; justify-content: center; 
+        }
+        .slider { 
+            -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; 
+            background: #e2e8f0; outline: none; margin: 12px 0 16px 0; transition: background 0.15s ease;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 26px; height: 26px; border-radius: 50%;
+            background: #ffffff; cursor: pointer; border: 5px solid var(--isopan-blue); 
+            box-shadow: 0 4px 8px rgba(0, 86, 179, 0.25); transition: transform 0.15s ease;
+        }
+        .slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 0; }
+        .slider-labels span { cursor: pointer; transition: all 0.2s ease; padding: 4px 10px; border-radius: 6px; margin: -4px -10px; }
+        .slider-labels span:hover { background: rgba(0, 86, 179, 0.05); }
+
+        select.form-control {
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 1.2rem center; background-size: 1.2em; padding-right: 3rem; cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%; background: linear-gradient(135deg, var(--isopan-blue) 0%, #00428a 100%);
+            color: white; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600;
+            margin-top: 16px; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 86, 179, 0.25);
+            display: flex; justify-content: center; align-items: center; min-height: 54px; transition: all 0.3s ease;
+        }
+        .btn-submit:hover { box-shadow: 0 8px 24px rgba(0, 86, 179, 0.35); transform: translateY(-2px); }
+
+        .loader { display: none; border: 3px solid rgba(255,255,255,0.25); border-radius: 50%; border-top: 3px solid white; width: 22px; height: 22px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .footer { margin-top: 24px; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-align: center; opacity: 0; animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.2s; }
+
+        /* Modales */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card { background: rgba(255, 255, 255, 0.95); border-radius: 24px; padding: 40px 32px; width: 90%; max-width: 400px; text-align: center; transform: scale(0.9) translateY(20px); opacity: 0; transition: all 0.4s ease; position: relative; }
+        .modal-overlay.active .modal-card { transform: scale(1) translateY(0); opacity: 1; }
+        
+        .modal-icon { width: 72px; height: 72px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 24px auto; font-size: 36px; font-weight: bold; opacity: 0; }
+        .modal-icon.success { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .modal-icon.error { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+        
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .modal-card h2 { font-size: 22px; margin-bottom: 12px; color: var(--text-main); }
+        .modal-card p { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; }
+        .modal-btn { background: var(--isopan-blue); color: white; border: none; border-radius: 12px; padding: 14px 28px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+
+        /* Botón Cerrar Liquid Glass */
+        .btn-close-modal { 
+            width: 34px; height: 34px; 
+            border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 18px; color: var(--text-secondary); 
+            cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 10;
+        }
+        .btn-close-modal:hover { 
+            color: var(--error-color); 
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 6px 14px rgba(239, 68, 68, 0.15);
+            transform: scale(1.05);
+        }
+        
+        /* Posición específica de la X en el modal de PIN */
+        #pinModal .btn-close-modal { position: absolute; top: 16px; right: 16px; }
+
+        /* Botón Flotante Historial */
+        .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; }
+        .main-fab { background: var(--isopan-blue); color: #fff; box-shadow: 0 6px 16px rgba(0, 86, 179, 0.3); width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 15px; font-weight: 600; display: flex; justify-content: center; align-items: center; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); gap: 0; }
+        .main-fab svg { min-width: 20px; }
+        .main-fab-text { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fab-container:hover .main-fab { width: 140px; border-radius: 30px; padding: 0 20px; background: var(--isopan-blue-hover); gap: 8px; }
+        .fab-container:hover .main-fab-text { max-width: 100px; opacity: 1; margin-left: 8px; }
+
+        /* Modal Historial (Base Escritorio) */
+        .history-modal { 
+            max-width: 1200px !important; width: 95vw !important; height: 90vh; 
+            display: flex; flex-direction: column; text-align: left; padding: 32px; 
+        }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        
+        .filter-panel { 
+            background: rgba(255, 255, 255, 0.5); border: 1px solid #cbd5e1; border-radius: 20px; 
+            padding: 16px; display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; align-items: flex-end; 
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+        
+        /* Contenedor preparado para scroll (min-height:0 evita colapsos de flexbox) */
+        .table-container { 
+            width: 100%; overflow-x: auto; overflow-y: auto; flex-grow: 1; min-height: 0;
+            border: 1px solid #cbd5e1; border-radius: 16px; background: rgba(255, 255, 255, 0.8);
+            -webkit-overflow-scrolling: touch; 
+        }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
+        th { background: rgba(0, 86, 179, 0.06); color: var(--isopan-blue); font-weight: 600; font-size: 13px; padding: 14px 16px; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; }
+        td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: var(--text-main); white-space: nowrap; transition: background-color 0.15s; }
+        
+        /* Intercalado de filas (Zebra Striping) */
+        #historyTable tbody tr:nth-child(even) td { background-color: rgba(241, 245, 249, 0.6); } /* Gris muy clarito */
+        /* Efecto Hover sobre las filas */
+        #historyTable tbody tr:hover td { background-color: rgba(0, 86, 179, 0.06) !important; }
+
+        .no-data { text-align: center; padding: 40px; color: var(--text-secondary); font-style: italic; }
+
+        .btn-export { background: #107c41; color: white; border: none; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+        .btn-export:hover { background: #0b5e31; }
+
+        .checkbox-container { display: flex; align-items: center; gap: 8px; margin-top: 16px; cursor: pointer; font-size: 14px; color: var(--text-secondary); justify-content: center; }
+        .checkbox-container input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--isopan-blue); }
+
+        /* =========================================
+           REGLAS ESPECÍFICAS PARA MÓVIL 
+           ========================================= */
+        @media (max-width: 768px) {
+            .glass-container { padding: 32px 20px; }
+            .form-row { flex-direction: column; gap: 20px; }
+            
+            .history-modal { padding: 20px 16px; height: 95vh; }
+            .history-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .history-header > div:last-child { width: 100%; justify-content: space-between; }
+            
+            /* Filtros más pequeños y ajustados en móvil */
+            .filter-panel { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-radius: 12px; }
+            .filter-group { flex: 1 1 45%; min-width: 110px; }
+            .filter-group label { font-size: 11px; margin-bottom: 2px; }
+            .filter-group .form-control { padding: 6px 8px; font-size: 12px; border-radius: 8px; }
+            
+            /* Ajuste extra agresivo para las fechas en móvil para que sean súper compactas */
+            input[type="date"].form-control { 
+                padding: 4px 4px; 
+                font-size: 11px; 
+                letter-spacing: -0.5px; /* Comprime un poco el texto para que quepa perfecto */
+                height: 32px; 
+            }
+
+            .table-container { border-radius: 12px; }
+            td, th { padding: 12px 10px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container" id="reporteAImprimir">
+        <div class="header">
+            <img class="logo-img" src="https://raw.githubusercontent.com/alvaromartinezisopan/app-calculadora-envios/refs/heads/main/logo2.png" alt="Logo Isopan">
+            <p>Ingreso de datos para delegados comerciales</p>
+        </div>
+
+        <form id="salesForm" novalidate>
+            <!-- 1. PAÍS -->
+            <div class="form-group">
+                <label>País de la operación</label>
+                <div class="radio-group-blocks" id="group-pais">
+                    <label class="radio-label"><input type="radio" name="pais" value="España" checked required> España</label>
+                    <label class="radio-label"><input type="radio" name="pais" value="Portugal" required> Portugal</label>
+                </div>
+            </div>
+
+            <!-- 2. CLIENTE -->
+            <div class="form-group">
+                <label for="cliente">Nombre del cliente</label>
+                <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Ej. Empresa S.L." required>
+            </div>
+
+            <!-- 3. REFERENCIA Y PROVINCIA -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="referencia">Referencia</label>
+                    <input type="text" id="referencia" name="referencia" class="form-control" placeholder="Ej. REF-1234" required>
+                </div>
+                <div class="form-group">
+                    <label for="provincia" id="label_provincia">Provincia</label>
+                    <select id="provincia" name="provincia" class="form-control" required>
+                        <option value="" disabled selected>Selecciona provincia</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 4. PRODUCTO Y AISLANTE -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Producto</label>
+                    <div class="radio-group" id="group-producto">
+                        <label class="radio-label"><input type="radio" name="producto" value="Cubierta" required>Cubierta</label>
+                        <label class="radio-label"><input type="radio" name="producto" value="Fachada" required>Fachada</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Aislante</label>
+                    <div class="radio-group" id="group-aislante">
+                        <label class="radio-label"><input type="radio" name="aislante" value="Poliuretano" required>Poliuretano</label>
+                        <label class="radio-label"><input type="radio" name="aislante" value="Lana" required>Lana</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. DESCUENTO -->
+            <div class="form-group">
+                <label for="descuento">Descuento aplicado (%)</label>
+                <input type="number" id="descuento" name="descuento" class="form-control" placeholder="Ej. 15" min="0" max="100" step="0.1" required>
+            </div>
+
+            <!-- 6. ÉXITO Y METROS -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="exito">Probabilidad de éxito</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="exito" name="exito" min="10" max="90" step="40" value="50" class="slider">
+                        <div class="slider-labels">
+                            <span data-val="10">10%</span>
+                            <span data-val="50">50%</span>
+                            <span data-val="90">90%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="metros">Superficie (m²)</label>
+                    <input type="number" id="metros" name="metros" class="form-control" placeholder="Ej. 150" inputmode="numeric" pattern="[0-9]*" required>
+                </div>
+            </div>
+          
+            <!-- 7. DELEGADO -->
+            <div class="form-group">
+                <label for="delegado">Nombre del delegado</label>
+                <select id="delegado" name="delegado" class="form-control" required>
+                    <option value="" disabled selected id="delegadoPlaceholder">Cargando delegados...</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span id="btnText">Registrar Datos</span>
+                <div id="btnLoader" class="loader"></div>
+            </button>
+        </form>
+    </div>
+
+    <div class="footer">
+        © 2026 Isopan Ibérica · v 1.1
+    </div>
+
+    <!-- BOTÓN FLOTANTE HISTORIAL -->
+    <div class="fab-container">
+        <button class="main-fab" id="btnOpenPinModal" title="Ver mi historial">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="main-fab-text">Historial</span>
+        </button>
+    </div>
+
+    <!-- MODALES VARIOS -->
+    <div id="statusModal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modalIcon" class="modal-icon"></div>
+            <h2 id="modalTitle">¡Título!</h2>
+            <p id="modalMessage">Mensaje informativo.</p>
+            <button type="button" id="modalCloseBtn" class="modal-btn">Entendido</button>
+        </div>
+    </div>
+
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="btn-close-modal" onclick="document.getElementById('pinModal').classList.remove('active'); document.body.classList.remove('modal-open');">✕</button>
+            <h2 style="color: var(--isopan-blue);">Acceso al Historial</h2>
+            <p>Introduce tu PIN para ver tus operaciones registradas.</p>
+            
+            <div class="form-group">
+                <label>Delegado</label>
+                <select id="pinDelegado" class="form-control">
+                    <option value="" disabled selected>Selecciona un delegado...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>PIN de Acceso</label>
+                <input type="password" id="pinPassword" class="form-control" placeholder="****" inputmode="numeric" pattern="[0-9]*" style="letter-spacing: 4px; text-align: center; font-size: 20px;">
+            </div>
+            
+            <div id="pinErrorMsg" class="inline-error"></div>
+
+            <label class="checkbox-container">
+                <input type="checkbox" id="chkRecordarPin"> Recordar en este dispositivo
+            </label>
+
+            <button type="button" id="btnValidarPin" class="btn-submit" style="margin-top: 24px;">
+                <span id="btnPinText">Entrar</span>
+                <div id="btnPinLoader" class="loader"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL -->
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal-card history-modal">
+            <div class="history-header">
+                <div>
+                    <h2 style="color: var(--isopan-blue); margin-bottom: 4px;">Mi Historial Comercial</h2>
+                    <p style="margin-bottom: 0;" id="historySubtitle">Delegado: -</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="btnExportarExcel" class="btn-export">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
+                        Exportar
+                    </button>
+                    <!-- Aquí el botón de cerrar también coge la nueva clase -->
+                    <button class="btn-close-modal" onclick="document.getElementById('historyModal').classList.remove('active'); document.body.classList.remove('modal-open');">✕</button>
+                </div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-group"><label>Desde</label><input type="date" id="filtroDesde" class="form-control"></div>
+                <div class="filter-group"><label>Hasta</label><input type="date" id="filtroHasta" class="form-control"></div>
+                <div class="filter-group"><label>Cliente</label><input type="text" id="filtroCliente" class="form-control" placeholder="Buscar..."></div>
+                <div class="filter-group"><label>Referencia</label><input type="text" id="filtroReferencia" class="form-control" placeholder="Buscar..."></div>
+                <div class="filter-group"><label>Producto</label><select id="filtroProducto" class="form-control"><option value="">Todos</option><option value="Cubierta">Cubierta</option><option value="Fachada">Fachada</option></select></div>
+                <div class="filter-group"><label>Aislante</label><select id="filtroAislante" class="form-control"><option value="">Todos</option><option value="Poliuretano">Poliuretano</option><option value="Lana">Lana</option></select></div>
+            </div>
+
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Referencia</th>
+                            <th>Provincia</th>
+                            <th>Producto</th>
+                            <th>Aislante</th>
+                            <th>Desc. (%)</th>
+                            <th>Metros (m²)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+                <div id="historyNoData" class="no-data" style="display: none;">No hay registros para mostrar.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const URL_DEL_WEB_APP = 'https://script.google.com/macros/s/AKfycbzNSnW6d8hWrvDFnfekCKurqta5ui_ImRKFseerJ4vdCDS-oT9eawvmS_-UbA2rie_S/exec'; 
+
+        const provinciasES = {
+            "01": "Álava", "02": "Albacete", "03": "Alicante", "04": "Almería", "05": "Ávila",
+            "06": "Badajoz", "07": "Baleares", "08": "Barcelona", "09": "Burgos", "10": "Cáceres",
+            "11": "Cádiz", "12": "Castellón", "13": "Ciudad Real", "14": "Córdoba", "15": "A Coruña",
+            "16": "Cuenca", "17": "Girona", "18": "Granada", "19": "Guadalajara", "20": "Gipuzkoa",
+            "21": "Huelva", "22": "Huesca", "23": "Jaén", "24": "León", "25": "Lleida",
+            "26": "La Rioja", "27": "Lugo", "28": "Madrid", "29": "Málaga", "30": "Murcia",
+            "31": "Navarra", "32": "Ourense", "33": "Asturias", "34": "Palencia", "35": "Las Palmas",
+            "36": "Pontevedra", "37": "Salamanca", "38": "Santa Cruz de Tenerife", "39": "Cantabria", "40": "Segovia",
+            "41": "Sevilla", "42": "Soria", "43": "Tarragona", "44": "Teruel", "45": "Toledo",
+            "46": "Valencia", "47": "Valladolid", "48": "Bizkaia", "49": "Zamora", "50": "Zaragoza",
+            "51": "Ceuta", "52": "Melilla"
+        };
+
+        const distritosPT = {
+            "01": "Aveiro", "02": "Beja", "03": "Braga", "04": "Bragança", "05": "Castelo Branco",
+            "06": "Coimbra", "07": "Évora", "08": "Faro", "09": "Guarda", "10": "Leiria",
+            "11": "Lisboa", "12": "Portalegre", "13": "Porto", "14": "Santarém", "15": "Setúbal",
+            "16": "Viana do Castelo", "17": "Vila Real", "18": "Viseu"
+        };
+
+        const selectProvincia = document.getElementById('provincia');
+        const labelProvincia = document.getElementById('label_provincia');
+        let provinciasActuales = provinciasES;
+
+        function renderizarProvincias(diccionario) {
+            selectProvincia.innerHTML = '<option value="" disabled selected>Selecciona...</option>';
+            const codigosOrdenados = Object.keys(diccionario).sort((a, b) => parseInt(a) - parseInt(b));
+            for (const codigo of codigosOrdenados) {
+                const nombre = diccionario[codigo];
+                const opt = document.createElement('option');
+                opt.value = nombre;
+                opt.dataset.codigo = codigo; 
+                opt.textContent = nombre;
+                selectProvincia.appendChild(opt);
+            }
+        }
+        renderizarProvincias(provinciasActuales);
+
+        const form = document.getElementById('salesForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        const delegadoSelect = document.getElementById('delegado');
+        const pinDelegadoSelect = document.getElementById('pinDelegado');
+        const statusModal = document.getElementById('statusModal');
+
+        const radiosPais = document.querySelectorAll('input[name="pais"]');
+        radiosPais.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'Portugal') {
+                    provinciasActuales = distritosPT;
+                    labelProvincia.textContent = "Distrito";
+                } else {
+                    provinciasActuales = provinciasES;
+                    labelProvincia.textContent = "Provincia";
+                }
+                renderizarProvincias(provinciasActuales);
+            });
+        });
+
+        /* SLIDER PROBABILIDAD */
+        const exitoSlider = document.getElementById('exito');
+        const exitoLabels = document.querySelectorAll('.slider-labels span');
+
+        function updateSliderVisuals() {
+            let val = parseInt(exitoSlider.value);
+            let percent = ((val - 10) / 80) * 100; 
+            exitoSlider.style.background = `linear-gradient(to right, var(--isopan-blue) 0%, var(--isopan-blue) ${percent}%, #e2e8f0 ${percent}%, #e2e8f0 100%)`;
+            exitoLabels.forEach(label => {
+                if (parseInt(label.dataset.val) === val) {
+                    label.style.color = 'var(--isopan-blue)';
+                    label.style.transform = 'scale(1.15)';
+                } else {
+                    label.style.color = 'var(--text-secondary)';
+                    label.style.transform = 'scale(1)';
+                }
+            });
+        }
+        exitoSlider.addEventListener('input', updateSliderVisuals);
+        exitoLabels.forEach(label => {
+            label.addEventListener('click', () => { exitoSlider.value = label.dataset.val; updateSliderVisuals(); });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => { updateSliderVisuals(); cargarDelegados(); });
+
+        async function cargarDelegados() {
+            try {
+                const response = await fetch(URL_DEL_WEB_APP);
+                const delegados = await response.json();
+                const defaultOption = '<option value="" disabled selected>Selecciona un delegado...</option>';
+                delegadoSelect.innerHTML = defaultOption;
+                pinDelegadoSelect.innerHTML = defaultOption;
+                
+                if (Array.isArray(delegados) && delegados.length > 0) {
+                    delegados.forEach(nombre => {
+                        if (nombre && nombre.trim() !== '') {
+                            const option = document.createElement('option');
+                            option.value = nombre.trim();
+                            option.textContent = nombre.trim();
+                            delegadoSelect.appendChild(option.cloneNode(true));
+                            pinDelegadoSelect.appendChild(option);
+                        }
+                    });
+                }
+                
+                const savedDel = localStorage.getItem('isopan_delegado');
+                const savedPin = localStorage.getItem('isopan_pin');
+                if(savedDel && savedPin) {
+                    pinDelegadoSelect.value = savedDel;
+                    document.getElementById('pinPassword').value = savedPin;
+                    document.getElementById('chkRecordarPin').checked = true;
+                }
+            } catch (error) { console.error('Error al obtener delegados:', error); }
+        }
+
+        function mostrarPopUp(titulo, mensaje, tipo) {
+            document.getElementById('modalTitle').textContent = titulo;
+            document.getElementById('modalMessage').textContent = mensaje;
+            const modalIcon = document.getElementById('modalIcon');
+            modalIcon.classList.remove('animate-pop');
+            void modalIcon.offsetWidth; 
+            if (tipo === 'success') {
+                modalIcon.textContent = '✓'; modalIcon.className = 'modal-icon success animate-pop';
+                document.getElementById('modalCloseBtn').style.backgroundColor = 'var(--isopan-blue)';
+            } else {
+                modalIcon.textContent = '✕'; modalIcon.className = 'modal-icon error animate-pop';
+                document.getElementById('modalCloseBtn').style.backgroundColor = '#dc2626';
+            }
+            statusModal.classList.add('active');
+        }
+
+        document.getElementById('modalCloseBtn').addEventListener('click', () => { statusModal.classList.remove('active'); });
+
+        form.addEventListener('input', (e) => {
+            if (e.target.classList.contains('input-error')) e.target.classList.remove('input-error');
+            if (e.target.type === 'radio') {
+                const group = e.target.closest('.radio-group') || e.target.closest('.radio-group-blocks');
+                if (group && group.classList.contains('input-error')) group.classList.remove('input-error');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            let hasError = false;
+
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            const inputs = form.querySelectorAll('input[type="text"], input[type="number"], select');
+            inputs.forEach(input => { if (input.required && !input.value.trim()) { input.classList.add('input-error'); hasError = true; } });
+
+            const radioGroups = ['producto', 'aislante', 'pais'];
+            radioGroups.forEach(groupName => {
+                const radios = form.querySelectorAll(`input[name="${groupName}"]`);
+                const isChecked = Array.from(radios).some(radio => radio.checked);
+                if (!isChecked) {
+                    const groupContainer = document.getElementById(`group-${groupName}`);
+                    if (groupContainer) { groupContainer.classList.add('input-error'); hasError = true; }
+                }
+            });
+
+            if (hasError) return;
+            btnText.style.display = 'none'; btnLoader.style.display = 'block'; submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.exito = data.exito + '%';
+
+            const hoy = new Date();
+            data.fecha = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+
+            try {
+                await fetch(URL_DEL_WEB_APP, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                mostrarPopUp('¡Registro Guardado!', 'Datos guardados correctamente.', 'success');
+                
+                form.reset();
+                document.getElementById('exito').value = "50";
+                updateSliderVisuals();
+                delegadoSelect.selectedIndex = 0; 
+                document.querySelector('input[name="pais"][value="España"]').checked = true;
+                labelProvincia.textContent = "Provincia";
+                renderizarProvincias(provinciasES);
+            } catch (error) { mostrarPopUp('Error de Conexión', 'No se pudo establecer conexión.', 'error'); } 
+            finally { btnText.style.display = 'block'; btnLoader.style.display = 'none'; submitBtn.disabled = false; }
+        });
+
+        /* HISTORIAL */
+        let misDatosGlobales = [];
+        let misDatosFiltrados = [];
+
+        document.getElementById('btnOpenPinModal').addEventListener('click', () => {
+            document.getElementById('pinErrorMsg').style.display = 'none';
+            document.getElementById('pinModal').classList.add('active');
+            document.body.classList.add('modal-open');
+        });
+
+        document.getElementById('btnValidarPin').addEventListener('click', async () => {
+            const del = pinDelegadoSelect.value;
+            const pinInput = document.getElementById('pinPassword');
+            const pin = pinInput.value;
+            const recordar = document.getElementById('chkRecordarPin').checked;
+            const errorMsg = document.getElementById('pinErrorMsg'); 
+            
+            errorMsg.style.display = 'none';
+
+            if(!del || !pin) {
+                errorMsg.textContent = "Por favor, selecciona tu nombre e introduce el PIN.";
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            const btnTextPin = document.getElementById('btnPinText');
+            const btnLoaderPin = document.getElementById('btnPinLoader');
+            btnTextPin.style.display = 'none'; btnLoaderPin.style.display = 'block';
+            document.getElementById('btnValidarPin').disabled = true;
+
+            try {
+                const response = await fetch(`${URL_DEL_WEB_APP}?action=getHistorial&delegado=${encodeURIComponent(del)}&pin=${encodeURIComponent(pin)}`);
+                const resultado = await response.json();
+
+                if(resultado.error) {
+                    errorMsg.textContent = "PIN incorrecto. Inténtalo de nuevo.";
+                    errorMsg.style.display = 'block';
+                    
+                    pinInput.value = '';
+                    pinInput.focus();
+                } else {
+                    if(recordar) {
+                        localStorage.setItem('isopan_delegado', del);
+                        localStorage.setItem('isopan_pin', pin);
+                    } else {
+                        localStorage.removeItem('isopan_delegado');
+                        localStorage.removeItem('isopan_pin');
+                    }
+                    
+                    document.getElementById('pinModal').classList.remove('active');
+                    document.getElementById('historySubtitle').textContent = `Delegado: ${del}`;
+                    misDatosGlobales = resultado;
+                    filtrarTablaHistorial();
+                    
+                    document.getElementById('historyModal').classList.add('active');
+                }
+            } catch(e) {
+                errorMsg.textContent = "Error de conexión. Revisa tu internet e inténtalo de nuevo.";
+                errorMsg.style.display = 'block';
+            } finally {
+                btnTextPin.style.display = 'block'; btnLoaderPin.style.display = 'none';
+                document.getElementById('btnValidarPin').disabled = false;
+            }
+        });
+
+        function parseFechaLocal(fechaStr) {
+            if (!fechaStr) return 0;
+            if (fechaStr.includes('/')) {
+                const partes = fechaStr.split(/[\s/:]+/); 
+                if (partes.length >= 3) return new Date(partes[2], partes[1] - 1, partes[0]).getTime();
+            }
+            const dt = new Date(fechaStr);
+            return isNaN(dt.getTime()) ? 0 : dt.getTime();
+        }
+
+        function filtrarTablaHistorial() {
+            let desde = document.getElementById('filtroDesde').value;
+            let hasta = document.getElementById('filtroHasta').value;
+            const cliente = document.getElementById('filtroCliente').value.toLowerCase().trim();
+            const referencia = document.getElementById('filtroReferencia').value.toLowerCase().trim();
+            const prod = document.getElementById('filtroProducto').value;
+            const aisl = document.getElementById('filtroAislante').value;
+
+            let tDesde = desde ? new Date(desde.split('-')[0], desde.split('-')[1] - 1, desde.split('-')[2], 0, 0, 0).getTime() : 0;
+            let tHasta = hasta ? new Date(hasta.split('-')[0], hasta.split('-')[1] - 1, hasta.split('-')[2], 23, 59, 59, 999).getTime() : 0;
+
+            misDatosFiltrados = misDatosGlobales.filter(item => {
+                let fFecha = parseFechaLocal(item.fecha);
+                let pass = true;
+                if (tDesde) pass = pass && fFecha >= tDesde;
+                if (tHasta) pass = pass && fFecha <= tHasta;
+                if (cliente) pass = pass && String(item.cliente).toLowerCase().includes(cliente);
+                if (referencia) pass = pass && String(item.referencia).toLowerCase().includes(referencia);
+                if (prod) pass = pass && item.producto === prod;
+                if (aisl) pass = pass && item.aislante === aisl;
+                return pass;
+            });
+            renderizarTablaHistorial();
+        }
+
+        function renderizarTablaHistorial() {
+            const tableBody = document.getElementById('historyTableBody');
+            const noData = document.getElementById('historyNoData');
+            
+            if(!misDatosFiltrados.length) {
+                tableBody.innerHTML = '';
+                document.getElementById('historyTable').style.display = 'none';
+                noData.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('historyTable').style.display = 'table';
+            noData.style.display = 'none';
+            
+            tableBody.innerHTML = misDatosFiltrados.map(f => `
+                <tr>
+                    <td>${f.fecha || '-'}</td>
+                    <td style="font-weight:500;">${f.cliente || '-'}</td>
+                    <td>${f.referencia || '-'}</td>
+                    <td>${f.provincia || '-'}</td>
+                    <td>${f.producto || '-'}</td>
+                    <td>${f.aislante || '-'}</td>
+                    <td>${f.descuento ? parseFloat(f.descuento).toFixed(1).replace('.', ',') + '%' : '-'}</td>
+                    <td>${f.metros ? Math.round(f.metros).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g, ".") : '0'}</td>
+                </tr>
+            `).join('');
+        }
+
+        ['filtroDesde', 'filtroHasta', 'filtroCliente', 'filtroReferencia', 'filtroProducto', 'filtroAislante'].forEach(id => {
+            document.getElementById(id).addEventListener(id.includes('filtroCliente') || id.includes('filtroReferencia') ? 'input' : 'change', filtrarTablaHistorial);
+        });
+
+        document.getElementById('btnExportarExcel').addEventListener('click', () => {
+            if (!misDatosFiltrados.length) return alert('No hay datos para exportar.');
+            const excelData = [["Fecha", "Cliente", "Referencia", "Provincia", "Producto", "Aislante", "Descuento (%)", "Metros (m²)"]];
+            misDatosFiltrados.forEach(d => {
+                excelData.push([d.fecha || '-', d.cliente || '-', d.referencia || '-', d.provincia || '-', d.producto || '-', d.aislante || '-', parseFloat(d.descuento) || 0, parseFloat(d.metros) || 0]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            ws['!cols'] = [{wch: 12}, {wch: 30}, {wch: 20}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Mi_Historial");
+            XLSX.writeFile(wb, "Historial_Comercial.xlsx");
+        });
+    </script>
+</body>
+</html>
